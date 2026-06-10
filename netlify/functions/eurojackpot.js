@@ -226,6 +226,11 @@ async function debugSources() {
         url: source.url,
         length: html.length,
         preview: cleanText(html).slice(0, 1800),
+        scripts: [...html.matchAll(/<script[^>]+src=["']([^"']+)["']/gi)].map((match) => match[1]).slice(0, 20),
+        dataHints: [...html.matchAll(/["']([^"']*(?:api|result|winning|jackpot|draw)[^"']*)["']/gi)]
+          .map((match) => match[1])
+          .filter((value, index, list) => list.indexOf(value) === index)
+          .slice(0, 40),
       });
     } catch (error) {
       details.push({
