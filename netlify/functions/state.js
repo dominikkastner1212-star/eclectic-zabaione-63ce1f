@@ -51,7 +51,7 @@ exports.handler = async (event) => {
   let store;
 
   try {
-    const { getStore } = await import("@netlify/blobs");
+    const { getStore } = require("@netlify/blobs");
     store = getStore(STORE_NAME);
   } catch (error) {
     const state = normalizeState(defaultState);

@@ -8,6 +8,6 @@
     "check": "node --check app.js && node --check netlify/functions/eurojackpot.js && node --check netlify/functions/state.js"
   },
   "dependencies": {
-    "@netlify/blobs": "^9.1.2"
+    "@netlify/blobs": "8.1.0"
   }
 }
