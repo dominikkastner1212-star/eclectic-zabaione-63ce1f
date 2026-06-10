@@ -221,12 +221,32 @@ async function debugSources() {
   for (const source of sources) {
     try {
       const html = await fetchText(source.url);
+      const scripts = [...html.matchAll(/<script[^>]+src=["']([^"']+)["']/gi)].map((match) => match[1]).slice(0, 20);
+      const scriptHints = [];
+
+      for (const script of scripts.slice(0, 8)) {
+        const scriptUrl = new URL(script, source.url).toString();
+        try {
+          const scriptText = await fetchText(scriptUrl);
+          scriptHints.push({
+            script: scriptUrl,
+            hints: [...scriptText.matchAll(/["'`]([^"'`]*(?:api|graphql|result|winning|jackpot|draw|numbers)[^"'`]*)["'`]/gi)]
+              .map((match) => match[1])
+              .filter((value, index, list) => list.indexOf(value) === index)
+              .slice(0, 50),
+          });
+        } catch (error) {
+          scriptHints.push({ script: scriptUrl, error: error.message });
+        }
+      }
+
       details.push({
         source: source.name,
         url: source.url,
         length: html.length,
         preview: cleanText(html).slice(0, 1800),
-        scripts: [...html.matchAll(/<script[^>]+src=["']([^"']+)["']/gi)].map((match) => match[1]).slice(0, 20),
+        scripts,
+        scriptHints,
         dataHints: [...html.matchAll(/["']([^"']*(?:api|result|winning|jackpot|draw)[^"']*)["']/gi)]
           .map((match) => match[1])
           .filter((value, index, list) => list.indexOf(value) === index)
