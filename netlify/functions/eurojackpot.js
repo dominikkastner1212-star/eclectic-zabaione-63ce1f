@@ -99,21 +99,24 @@ function cleanText(value) {
 }
 
 function parseEuroJackpotNet(html, source) {
-  const compact = html.replace(/\s+/g, " ");
-  const markerIndex = compact.search(/Latest Result|Eurojackpot Results/i);
-  const segment = markerIndex >= 0 ? compact.slice(markerIndex, markerIndex + 12000) : compact;
-  const dateMatch = segment.match(/(Friday|Tuesday)\s+([^<]+?\s+20\d{2})/i);
-  const jackpotMatch = segment.match(/Jackpot\s*(?:&euro;|€|EUR)?\s*([\d.,]+)/i);
-  const numberMatches = [...segment.matchAll(/<li[^>]*>\s*(\d{1,2})\s*<\/li>/gi)]
+  const text = cleanText(html).replace(/&times;/g, "x");
+  const markerIndex = text.search(/Latest Result/i);
+  const segment = markerIndex >= 0 ? text.slice(markerIndex, markerIndex + 1800) : text;
+  const dateMatch = segment.match(/Latest Result\s+(Friday|Tuesday)\s+(\d{1,2})\s*(?:st|nd|rd|th)?\s+([A-Za-z]+)\s+(20\d{2})/i);
+  const jackpotIndex = segment.search(/Jackpot\s*(?:EUR|€)/i);
+  const beforeJackpot = jackpotIndex >= 0 ? segment.slice(0, jackpotIndex) : segment;
+  const jackpotMatch = segment.match(/Jackpot\s*(?:EUR|€)\s*([\d.,]+)/i);
+  const numberMatches = [...beforeJackpot.matchAll(/\b([1-9]|[1-4]\d|50)\b/g)]
     .map((match) => Number(match[1]))
-    .filter((number) => Number.isInteger(number));
+    .filter((number) => Number.isInteger(number))
+    .slice(-7);
 
   if (!dateMatch || numberMatches.length < 7) {
     throw new Error(`${source.name} parse failed`);
   }
 
   return normalizeResult({
-    drawDate: `${dateMatch[1]} ${dateMatch[2]}`,
+    drawDate: `${dateMatch[1]} ${dateMatch[2]} ${dateMatch[3]} ${dateMatch[4]}`,
     numbers: numberMatches.slice(0, 5),
     euroNumbers: numberMatches.slice(5, 7),
     jackpot: jackpotMatch ? `${jackpotMatch[1]} EUR` : "unbekannt",
@@ -215,76 +218,7 @@ async function saveCachedResult(result) {
   }
 }
 
-async function debugSources() {
-  const details = [];
-
-  for (const source of sources) {
-    try {
-      const html = await fetchText(source.url);
-      const scripts = [...html.matchAll(/<script[^>]+src=["']([^"']+)["']/gi)].map((match) => match[1]).slice(0, 20);
-      const scriptHints = [];
-
-      for (const script of scripts.slice(0, 8)) {
-        const scriptUrl = new URL(script, new URL("/", source.url)).toString();
-        try {
-          const scriptText = await fetchText(scriptUrl);
-          scriptHints.push({
-            script: scriptUrl,
-            urls: [...scriptText.matchAll(/https?:\/\/[^"'`\\\s)]+/gi)]
-              .map((match) => match[0])
-              .filter((value, index, list) => list.indexOf(value) === index)
-              .slice(0, 80),
-            paths: [...scriptText.matchAll(/["'`]((?:\/|\.\/)[^"'`]*(?:api|result|winning|jackpot|draw|numbers|quoten|auswertung)[^"'`]*)["'`]/gi)]
-              .map((match) => match[1])
-              .filter((value, index, list) => list.indexOf(value) === index)
-              .slice(0, 80),
-            hints: [...scriptText.matchAll(/["'`]([^"'`]{0,120}(?:api|result|winning|jackpot|draw|numbers|quoten|auswertung)[^"'`]{0,120})["'`]/gi)]
-              .map((match) => match[1])
-              .filter((value, index, list) => list.indexOf(value) === index)
-              .slice(0, 80),
-            contexts: ["Je_api", "getNumbersAndOdds", "getNumbersAndOddsByDate", "getNumbersAndOddsByYear", "Load jackpot teaser"].map((needle) => {
-              const index = scriptText.indexOf(needle);
-              return {
-                needle,
-                found: index >= 0,
-                context: index >= 0 ? scriptText.slice(Math.max(0, index - 700), index + 1200) : "",
-              };
-            }),
-          });
-        } catch (error) {
-          scriptHints.push({ script: scriptUrl, error: error.message });
-        }
-      }
-
-      details.push({
-        source: source.name,
-        url: source.url,
-        length: html.length,
-        preview: cleanText(html).slice(0, 1800),
-        scripts,
-        scriptHints,
-        dataHints: [...html.matchAll(/["']([^"']*(?:api|result|winning|jackpot|draw)[^"']*)["']/gi)]
-          .map((match) => match[1])
-          .filter((value, index, list) => list.indexOf(value) === index)
-          .slice(0, 40),
-      });
-    } catch (error) {
-      details.push({
-        source: source.name,
-        url: source.url,
-        error: error.message,
-      });
-    }
-  }
-
-  return details;
-}
-
-exports.handler = async (event) => {
-  if (event.queryStringParameters?.debug === "1") {
-    return json(200, { sources: await debugSources() });
-  }
-
+exports.handler = async () => {
   const errors = [];
 
   for (const source of sources) {
