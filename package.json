@@ -1,0 +1,13 @@
+{
+  "name": "eurojackpot-circle",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "deploy": "netlify deploy --prod",
+    "dev": "netlify dev",
+    "check": "node --check app.js && node --check netlify/functions/eurojackpot.js && node --check netlify/functions/state.js"
+  },
+  "dependencies": {
+    "@netlify/blobs": "^9.1.2"
+  }
+}

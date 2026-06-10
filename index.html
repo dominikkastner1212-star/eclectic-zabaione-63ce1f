@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Eurojackpot Circle</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <nav class="sidebar" aria-label="Hauptnavigation">
+        <a class="brand" href="#" aria-label="Eurojackpot Circle Start">
+          <span class="brand-mark" aria-hidden="true">
+            <span></span><span></span><span></span><span></span>
+          </span>
+          <span>
+            <strong>LottoApp</strong>
+            <small>Gemeinsam gewinnen</small>
+          </span>
+        </a>
+
+        <div class="nav-group">
+          <button class="nav-item active" type="button" data-section="overview">
+            <span class="icon" aria-hidden="true">*</span>
+            &Uuml;bersicht
+          </button>
+          <button class="nav-item" type="button" data-section="ticket">
+            <span class="icon" aria-hidden="true">O</span>
+            Spielschein
+          </button>
+          <button class="nav-item" type="button" data-section="team">
+            <span class="icon" aria-hidden="true">U</span>
+            Mitspieler
+          </button>
+          <button class="nav-item" type="button" data-section="tips">
+            <span class="icon" aria-hidden="true">#</span>
+            Tipps
+          </button>
+          <button class="nav-item" type="button" data-section="users">
+            <span class="icon" aria-hidden="true">@</span>
+            Benutzer
+          </button>
+          <button class="nav-item" type="button" data-section="cash">
+            <span class="icon" aria-hidden="true">D</span>
+            Kasse
+          </button>
+        </div>
+
+        <div class="sidebar-footer">
+          <span class="status-dot"></span>
+          <span>Abteilung Design</span>
+        </div>
+      </nav>
+
+      <section class="workspace" aria-labelledby="page-title">
+        <header class="topbar">
+          <div>
+            <p class="date-label" id="todayLabel">Heute</p>
+            <h1 id="page-title">Eurojackpot</h1>
+            <p class="hero-subtitle">Tipps, Jackpot und Teamrunde an einem Ort.</p>
+          </div>
+          <button class="primary-action" type="button" id="drawButton">
+            Gewinnzahlen pr&uuml;fen
+          </button>
+        </header>
+
+        <section class="hero-grid" id="overview">
+          <article class="draw-panel">
+            <div class="orb-cluster" aria-hidden="true">
+              <span></span><span></span><span></span><span></span>
+            </div>
+            <div class="panel-header">
+              <span>N&auml;chste gemeinsame Ziehung</span>
+              <strong>Freitag, 20:00</strong>
+            </div>
+            <div class="countdown" aria-live="polite">
+              <div>
+                <strong id="daysValue">01</strong>
+                <span>Tage</span>
+              </div>
+              <div>
+                <strong id="hoursValue">04</strong>
+                <span>Std.</span>
+              </div>
+              <div>
+                <strong id="minutesValue">28</strong>
+                <span>Min.</span>
+              </div>
+            </div>
+            <div class="ticket-strip" id="ticketStrip" aria-label="Aktuelle Eurojackpot-Reihe">
+              <span>06</span>
+              <span>14</span>
+              <span>21</span>
+              <span>32</span>
+              <span>41</span>
+              <span class="euro">03</span>
+              <span class="euro">07</span>
+            </div>
+          </article>
+
+          <article class="summary-panel">
+            <div class="metric">
+              <span>Jackpot diese Woche</span>
+              <strong id="jackpotValue">wird geladen</strong>
+              <small id="jackpotMeta">Automatische Aktualisierung</small>
+            </div>
+            <div class="metric">
+              <span>Letzte Zahlenrunde</span>
+              <strong id="resultDate">offen</strong>
+              <small id="resultSource">Quelle wird gepr&uuml;ft</small>
+            </div>
+            <div class="metric">
+              <span>Gemeinsame Reihen</span>
+              <strong>12</strong>
+              <small>5 aus 50 plus 2 Eurozahlen</small>
+            </div>
+          </article>
+        </section>
+
+        <section class="content-grid">
+          <article class="section-block wide tips-section" id="tips">
+            <div class="section-title">
+              <h2>Eure Tipps</h2>
+              <span class="quiet-label" id="tipsStatus">Warten auf Gewinnzahlen</span>
+            </div>
+            <div class="result-strip" id="resultStrip" aria-label="Aktuelle Gewinnzahlen"></div>
+            <div class="tips-list" id="tipsList"></div>
+          </article>
+
+          <article class="section-block" id="ticket">
+            <div class="section-title">
+              <h2>Spielschein</h2>
+              <button class="ghost-button" type="button" id="quickPickButton">Quick Pick</button>
+            </div>
+            <label class="select-label">
+              Tipp gehoert zu
+              <select id="tipOwner"></select>
+            </label>
+            <p class="section-note">5 Hauptzahlen aus 50 und 2 Eurozahlen aus 12.</p>
+            <div class="number-board" id="numberBoard" aria-label="Eurojackpot Hauptzahlen"></div>
+            <div class="euro-board" id="euroBoard" aria-label="Eurojackpot Eurozahlen"></div>
+            <button class="primary-action save-tip-action" type="button" id="saveTipButton">Tipp speichern</button>
+          </article>
+
+          <article class="section-block" id="team">
+            <div class="section-title">
+              <h2>Teamrunde</h2>
+              <span class="quiet-label">10 Personen</span>
+            </div>
+            <div class="member-list" id="memberList"></div>
+          </article>
+
+          <article class="section-block" id="users">
+            <div class="section-title">
+              <h2>Benutzerverwaltung</h2>
+              <span class="quiet-label">Admin</span>
+            </div>
+            <form class="user-form" id="userForm">
+              <label>
+                Name
+                <input id="userName" name="userName" type="text" autocomplete="name" required />
+              </label>
+              <label>
+                E-Mail
+                <input id="userEmail" name="userEmail" type="email" autocomplete="email" required />
+              </label>
+              <button class="primary-action" type="submit">Einladen</button>
+            </form>
+            <div class="user-list" id="userList"></div>
+          </article>
+
+          <article class="section-block wide" id="cash">
+            <div class="section-title">
+              <h2>Kasse</h2>
+              <span class="quiet-label">Juni 2026</span>
+            </div>
+            <div class="payment-table" id="paymentTable"></div>
+          </article>
+        </section>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>
