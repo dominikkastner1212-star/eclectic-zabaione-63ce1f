@@ -230,10 +230,18 @@ async function debugSources() {
           const scriptText = await fetchText(scriptUrl);
           scriptHints.push({
             script: scriptUrl,
-            hints: [...scriptText.matchAll(/["'`]([^"'`]*(?:api|graphql|result|winning|jackpot|draw|numbers)[^"'`]*)["'`]/gi)]
+            urls: [...scriptText.matchAll(/https?:\/\/[^"'`\\\s)]+/gi)]
+              .map((match) => match[0])
+              .filter((value, index, list) => list.indexOf(value) === index)
+              .slice(0, 80),
+            paths: [...scriptText.matchAll(/["'`]((?:\/|\.\/)[^"'`]*(?:api|result|winning|jackpot|draw|numbers|quoten|auswertung)[^"'`]*)["'`]/gi)]
               .map((match) => match[1])
               .filter((value, index, list) => list.indexOf(value) === index)
-              .slice(0, 50),
+              .slice(0, 80),
+            hints: [...scriptText.matchAll(/["'`]([^"'`]{0,120}(?:api|result|winning|jackpot|draw|numbers|quoten|auswertung)[^"'`]{0,120})["'`]/gi)]
+              .map((match) => match[1])
+              .filter((value, index, list) => list.indexOf(value) === index)
+              .slice(0, 80),
           });
         } catch (error) {
           scriptHints.push({ script: scriptUrl, error: error.message });
