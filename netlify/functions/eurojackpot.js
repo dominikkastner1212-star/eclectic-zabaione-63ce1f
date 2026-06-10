@@ -215,7 +215,35 @@ async function saveCachedResult(result) {
   }
 }
 
-exports.handler = async () => {
+async function debugSources() {
+  const details = [];
+
+  for (const source of sources) {
+    try {
+      const html = await fetchText(source.url);
+      details.push({
+        source: source.name,
+        url: source.url,
+        length: html.length,
+        preview: cleanText(html).slice(0, 1800),
+      });
+    } catch (error) {
+      details.push({
+        source: source.name,
+        url: source.url,
+        error: error.message,
+      });
+    }
+  }
+
+  return details;
+}
+
+exports.handler = async (event) => {
+  if (event.queryStringParameters?.debug === "1") {
+    return json(200, { sources: await debugSources() });
+  }
+
   const errors = [];
 
   for (const source of sources) {
