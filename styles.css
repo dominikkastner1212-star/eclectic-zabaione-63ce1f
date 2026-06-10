@@ -72,6 +72,68 @@ body::after {
     rgba(255, 255, 255, 0.24);
 }
 
+.is-hidden {
+  display: none !important;
+}
+
+.auth-gate {
+  display: grid;
+  min-height: 100vh;
+  place-items: center;
+  padding: 24px;
+}
+
+.auth-card {
+  display: grid;
+  justify-items: center;
+  width: min(440px, 100%);
+  border: 1px solid var(--line);
+  border-radius: 30px;
+  background: var(--panel-strong);
+  box-shadow: var(--shadow), var(--inset);
+  backdrop-filter: blur(28px) saturate(150%);
+  padding: 42px 30px;
+  text-align: center;
+}
+
+.auth-card h1 {
+  margin: 22px 0 10px;
+  font-size: 48px;
+}
+
+.auth-card p {
+  max-width: 320px;
+  margin-bottom: 26px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.auth-mark {
+  width: 72px;
+  height: 72px;
+}
+
+.auth-mark span {
+  width: 40px;
+  height: 40px;
+}
+
+.auth-mark span:nth-child(1) {
+  transform: translateY(-17px);
+}
+
+.auth-mark span:nth-child(2) {
+  transform: translateX(17px);
+}
+
+.auth-mark span:nth-child(3) {
+  transform: translateY(17px);
+}
+
+.auth-mark span:nth-child(4) {
+  transform: translateX(-17px);
+}
+
 button,
 input {
   font: inherit;
@@ -242,6 +304,19 @@ input {
   justify-content: space-between;
   gap: 20px;
   margin-bottom: 26px;
+}
+
+.account-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.account-actions span {
+  color: var(--muted);
+  font-size: 13px;
 }
 
 .date-label {
@@ -745,6 +820,10 @@ button.tag {
 
   .topbar {
     display: grid;
+  }
+
+  .account-actions {
+    justify-content: flex-start;
   }
 
   .tip-row {

@@ -35,7 +35,9 @@ Nach dem ersten Deploy:
 2. `Project configuration > Identity` aktivieren.
 3. Registrierung auf `Invite only` setzen.
 4. Kollegen einladen.
-5. Danach kann die `state` Function auf echte Identity-Rollen eingeschraenkt werden.
+5. Danach ist die App nur noch fuer eingeloggte Nutzer nutzbar.
+
+Die `state` Function lehnt Requests ohne gueltigen Identity-Login mit `401` ab.
 
 ## Wichtige Dateien
 

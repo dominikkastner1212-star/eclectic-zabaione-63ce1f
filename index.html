@@ -7,7 +7,18 @@
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <main class="app-shell">
+    <section class="auth-gate" id="authGate">
+      <div class="auth-card">
+        <span class="brand-mark auth-mark" aria-hidden="true">
+          <span></span><span></span><span></span><span></span>
+        </span>
+        <h1>LottoApp</h1>
+        <p>Bitte anmelden, um eure Eurojackpot-Runde zu sehen und Tipps zu verwalten.</p>
+        <button class="primary-action" type="button" id="loginButton">Anmelden</button>
+      </div>
+    </section>
+
+    <main class="app-shell is-hidden" id="appShell">
       <nav class="sidebar" aria-label="Hauptnavigation">
         <a class="brand" href="#" aria-label="Eurojackpot Circle Start">
           <span class="brand-mark" aria-hidden="true">
@@ -59,9 +70,13 @@
             <h1 id="page-title">Eurojackpot</h1>
             <p class="hero-subtitle">Tipps, Jackpot und Teamrunde an einem Ort.</p>
           </div>
-          <button class="primary-action" type="button" id="drawButton">
-            Gewinnzahlen pr&uuml;fen
-          </button>
+          <div class="account-actions">
+            <span id="currentUserLabel">Angemeldet</span>
+            <button class="ghost-button" type="button" id="logoutButton">Abmelden</button>
+            <button class="primary-action" type="button" id="drawButton">
+              Gewinnzahlen pr&uuml;fen
+            </button>
+          </div>
         </header>
 
         <section class="hero-grid" id="overview">
@@ -180,6 +195,7 @@
       </section>
     </main>
 
+    <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
     <script src="app.js"></script>
   </body>
 </html>

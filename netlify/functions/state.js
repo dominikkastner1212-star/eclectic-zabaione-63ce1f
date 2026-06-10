@@ -47,7 +47,17 @@ function normalizeState(input) {
   };
 }
 
-exports.handler = async (event) => {
+function getAuthenticatedUser(context) {
+  return context?.clientContext?.user || null;
+}
+
+exports.handler = async (event, context) => {
+  const user = getAuthenticatedUser(context);
+
+  if (!user) {
+    return json(401, { error: "Authentication required" });
+  }
+
   let store;
 
   try {

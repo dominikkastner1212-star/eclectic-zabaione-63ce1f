@@ -67,7 +67,14 @@ const jackpotValue = document.querySelector("#jackpotValue");
 const jackpotMeta = document.querySelector("#jackpotMeta");
 const resultDate = document.querySelector("#resultDate");
 const resultSource = document.querySelector("#resultSource");
+const appShell = document.querySelector("#appShell");
+const authGate = document.querySelector("#authGate");
+const loginButton = document.querySelector("#loginButton");
+const logoutButton = document.querySelector("#logoutButton");
+const currentUserLabel = document.querySelector("#currentUserLabel");
 let remoteSaveTimer;
+let currentIdentityUser = null;
+let appIntervals = [];
 
 function loadState() {
   try {
@@ -99,7 +106,7 @@ function scheduleRemoteSave() {
 
 async function loadRemoteState() {
   try {
-    const response = await fetch(STATE_ENDPOINT, { cache: "no-store" });
+    const response = await authFetch(STATE_ENDPOINT, { cache: "no-store" });
 
     if (!response.ok) {
       throw new Error("Remote state unavailable");
@@ -117,7 +124,7 @@ async function loadRemoteState() {
 
 async function saveRemoteState() {
   try {
-    await fetch(STATE_ENDPOINT, {
+    await authFetch(STATE_ENDPOINT, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ members, users, userTips }),
@@ -125,6 +132,65 @@ async function saveRemoteState() {
   } catch (error) {
     // Local persistence already succeeded; Netlify sync retries on the next change.
   }
+}
+
+async function authFetch(url, options = {}) {
+  const token = currentIdentityUser ? await currentIdentityUser.jwt() : "";
+  const headers = new Headers(options.headers || {});
+
+  if (token) {
+    headers.set("Authorization", `Bearer ${token}`);
+  }
+
+  return fetch(url, { ...options, headers });
+}
+
+function getIdentityUser() {
+  if (!window.netlifyIdentity) {
+    return null;
+  }
+
+  return window.netlifyIdentity.currentUser();
+}
+
+function showSignedOut() {
+  currentIdentityUser = null;
+  authGate.classList.remove("is-hidden");
+  appShell.classList.add("is-hidden");
+}
+
+async function showSignedIn(user) {
+  currentIdentityUser = user;
+  currentUserLabel.textContent = user?.email || "Angemeldet";
+  authGate.classList.add("is-hidden");
+  appShell.classList.remove("is-hidden");
+  await initApp();
+}
+
+function initIdentity() {
+  if (!window.netlifyIdentity) {
+    authGate.querySelector("p").textContent = "Netlify Identity konnte nicht geladen werden.";
+    return;
+  }
+
+  window.netlifyIdentity.on("init", (user) => {
+    if (user) {
+      showSignedIn(user);
+    } else {
+      showSignedOut();
+    }
+  });
+
+  window.netlifyIdentity.on("login", (user) => {
+    window.netlifyIdentity.close();
+    showSignedIn(user);
+  });
+
+  window.netlifyIdentity.on("logout", () => {
+    showSignedOut();
+  });
+
+  window.netlifyIdentity.init();
 }
 
 function formatDate() {
@@ -564,6 +630,13 @@ drawButton.addEventListener("click", () => {
 });
 
 async function initApp() {
+  if (!currentIdentityUser) {
+    return;
+  }
+
+  appIntervals.forEach((intervalId) => clearInterval(intervalId));
+  appIntervals = [];
+
   await loadRemoteState();
   formatDate();
   updateCountdown();
@@ -573,8 +646,16 @@ async function initApp() {
   renderUsers();
   renderTipOwners();
   loadEurojackpotData();
-  setInterval(updateCountdown, 60000);
-  setInterval(loadEurojackpotData, 900000);
+  appIntervals = [setInterval(updateCountdown, 60000), setInterval(loadEurojackpotData, 900000)];
 }
 
-initApp();
+loginButton.addEventListener("click", () => {
+  window.netlifyIdentity?.open("login");
+});
+
+logoutButton.addEventListener("click", () => {
+  window.netlifyIdentity?.logout();
+});
+
+currentIdentityUser = getIdentityUser();
+initIdentity();
