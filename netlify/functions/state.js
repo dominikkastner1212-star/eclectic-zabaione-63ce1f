@@ -52,7 +52,15 @@ exports.handler = async (event) => {
 
   try {
     const { getStore } = require("@netlify/blobs");
-    store = getStore(STORE_NAME);
+    const manualConfig =
+      process.env.NETLIFY_BLOBS_SITE_ID && process.env.NETLIFY_BLOBS_TOKEN
+        ? {
+            siteID: process.env.NETLIFY_BLOBS_SITE_ID,
+            token: process.env.NETLIFY_BLOBS_TOKEN,
+          }
+        : undefined;
+
+    store = manualConfig ? getStore(STORE_NAME, manualConfig) : getStore(STORE_NAME);
   } catch (error) {
     const state = normalizeState(defaultState);
     state.storage = "local-fallback";
