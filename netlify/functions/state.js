@@ -65,6 +65,11 @@ exports.handler = async (event) => {
     const state = normalizeState(defaultState);
     state.storage = "local-fallback";
     state.warning = error.message;
+    state.envCheck = {
+      hasSiteId: Boolean(process.env.NETLIFY_BLOBS_SITE_ID),
+      hasToken: Boolean(process.env.NETLIFY_BLOBS_TOKEN),
+      version: "manual-env-v2",
+    };
     return json(event.httpMethod === "GET" ? 200 : 202, state);
   }
 
@@ -87,6 +92,11 @@ exports.handler = async (event) => {
       ...normalizeState(defaultState),
       storage: "fallback-after-error",
       warning: error.message,
+      envCheck: {
+        hasSiteId: Boolean(process.env.NETLIFY_BLOBS_SITE_ID),
+        hasToken: Boolean(process.env.NETLIFY_BLOBS_TOKEN),
+        version: "manual-env-v2",
+      },
     });
   }
 };
