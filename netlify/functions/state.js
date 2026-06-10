@@ -56,7 +56,7 @@ exports.handler = async (event) => {
   } catch (error) {
     const state = normalizeState(defaultState);
     state.storage = "local-fallback";
-    state.warning = "@netlify/blobs is not available in this deploy";
+    state.warning = error.message;
     return json(event.httpMethod === "GET" ? 200 : 202, state);
   }
 
