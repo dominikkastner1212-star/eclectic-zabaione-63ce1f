@@ -242,6 +242,14 @@ async function debugSources() {
               .map((match) => match[1])
               .filter((value, index, list) => list.indexOf(value) === index)
               .slice(0, 80),
+            contexts: ["Je_api", "getNumbersAndOdds", "getNumbersAndOddsByDate", "getNumbersAndOddsByYear", "Load jackpot teaser"].map((needle) => {
+              const index = scriptText.indexOf(needle);
+              return {
+                needle,
+                found: index >= 0,
+                context: index >= 0 ? scriptText.slice(Math.max(0, index - 700), index + 1200) : "",
+              };
+            }),
           });
         } catch (error) {
           scriptHints.push({ script: scriptUrl, error: error.message });
