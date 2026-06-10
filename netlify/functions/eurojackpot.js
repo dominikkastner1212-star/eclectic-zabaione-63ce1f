@@ -225,7 +225,7 @@ async function debugSources() {
       const scriptHints = [];
 
       for (const script of scripts.slice(0, 8)) {
-        const scriptUrl = new URL(script, source.url).toString();
+        const scriptUrl = new URL(script, new URL("/", source.url)).toString();
         try {
           const scriptText = await fetchText(scriptUrl);
           scriptHints.push({
