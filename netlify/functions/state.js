@@ -60,7 +60,15 @@ exports.handler = async (event) => {
           }
         : undefined;
 
-    store = manualConfig ? getStore(STORE_NAME, manualConfig) : getStore(STORE_NAME);
+    if (manualConfig) {
+      try {
+        store = getStore(STORE_NAME, manualConfig);
+      } catch (error) {
+        store = getStore({ name: STORE_NAME, ...manualConfig });
+      }
+    } else {
+      store = getStore(STORE_NAME);
+    }
   } catch (error) {
     const state = normalizeState(defaultState);
     state.storage = "local-fallback";
