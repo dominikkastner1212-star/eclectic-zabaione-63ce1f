@@ -76,6 +76,44 @@ let remoteSaveTimer;
 let currentIdentityUser = null;
 let appIntervals = [];
 
+function getCurrentEmail() {
+  return currentIdentityUser?.email || "";
+}
+
+function getCurrentRoles() {
+  const appRoles = currentIdentityUser?.app_metadata?.roles;
+  const userRoles = currentIdentityUser?.user_metadata?.roles;
+  const roles = Array.isArray(appRoles) ? appRoles : Array.isArray(userRoles) ? userRoles : [];
+  return roles.map((role) => String(role).toLowerCase());
+}
+
+function isCurrentUserAdmin() {
+  return getCurrentRoles().includes("admin");
+}
+
+function getCurrentAppUser() {
+  const email = getCurrentEmail().toLowerCase();
+  return users.find((user) => user.email.toLowerCase() === email);
+}
+
+function canEditTip(userId) {
+  return isCurrentUserAdmin() || getCurrentAppUser()?.id === userId;
+}
+
+function applyRoleUi() {
+  const admin = isCurrentUserAdmin();
+
+  document.querySelectorAll(".admin-only").forEach((element) => {
+    element.classList.toggle("is-hidden", !admin);
+  });
+
+  paymentTable.querySelectorAll("button").forEach((button) => {
+    button.disabled = !admin;
+  });
+
+  currentUserLabel.textContent = `${getCurrentEmail()} · ${admin ? "Admin" : "Mitglied"}`;
+}
+
 function loadState() {
   try {
     const stored = JSON.parse(localStorage.getItem(STORAGE_KEY));
@@ -124,11 +162,27 @@ async function loadRemoteState() {
 
 async function saveRemoteState() {
   try {
-    await authFetch(STATE_ENDPOINT, {
+    const response = await authFetch(STATE_ENDPOINT, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ members, users, userTips }),
     });
+
+    if (!response.ok) {
+      throw new Error("Remote save rejected");
+    }
+
+    const state = await response.json();
+    members = Array.isArray(state.members) ? state.members : members;
+    users = Array.isArray(state.users) ? state.users : users;
+    userTips = Array.isArray(state.userTips) ? state.userTips : userTips;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ members, users, userTips }));
+    renderMembers();
+    renderPayments();
+    renderUsers();
+    renderTipOwners();
+    renderTips();
+    applyRoleUi();
   } catch (error) {
     // Local persistence already succeeded; Netlify sync retries on the next change.
   }
@@ -161,7 +215,6 @@ function showSignedOut() {
 
 async function showSignedIn(user) {
   currentIdentityUser = user;
-  currentUserLabel.textContent = user?.email || "Angemeldet";
   authGate.classList.add("is-hidden");
   appShell.classList.remove("is-hidden");
   await initApp();
@@ -274,7 +327,9 @@ function renderTicketStrip() {
 }
 
 function renderTipOwners() {
-  const activeUsers = users.filter((user) => user.active);
+  const activeUsers = isCurrentUserAdmin()
+    ? users.filter((user) => user.active)
+    : users.filter((user) => user.active && user.email.toLowerCase() === getCurrentEmail().toLowerCase());
   const selectedValue = tipOwner.value || String(activeUsers[0]?.id || "");
 
   tipOwner.innerHTML = activeUsers
@@ -331,7 +386,7 @@ function generateQuickPick() {
 function saveCurrentTip() {
   const userId = Number(tipOwner.value);
 
-  if (!userId || selectedNumbers.length !== 5 || selectedEuroNumbers.length !== 2) {
+  if (!userId || !canEditTip(userId) || selectedNumbers.length !== 5 || selectedEuroNumbers.length !== 2) {
     return;
   }
 
@@ -355,6 +410,10 @@ function saveCurrentTip() {
 }
 
 function editTip(userId) {
+  if (!canEditTip(userId)) {
+    return;
+  }
+
   const tip = userTips.find((item) => item.userId === userId);
 
   if (!tip) {
@@ -444,7 +503,11 @@ function renderTips() {
           <span class="tip-numbers">${formatTip(tip.numbers, tip.euroNumbers, latestResult)}</span>
           <span class="tip-actions">
             <span class="tag ${score.mainHits + score.euroHits > 0 ? "" : "open"}">${status}</span>
-            <button class="text-button" type="button" data-edit-tip="${tip.userId}">bearbeiten</button>
+            ${
+              canEditTip(tip.userId)
+                ? `<button class="text-button" type="button" data-edit-tip="${tip.userId}">bearbeiten</button>`
+                : ""
+            }
           </span>
         </div>
       `;
@@ -526,6 +589,10 @@ function renderUsers() {
 function addUser(event) {
   event.preventDefault();
 
+  if (!isCurrentUserAdmin()) {
+    return;
+  }
+
   users = [
     ...users,
     {
@@ -556,6 +623,10 @@ function addUser(event) {
 }
 
 function toggleUser(userId) {
+  if (!isCurrentUserAdmin()) {
+    return;
+  }
+
   users = users.map((user) => {
     if (user.id !== userId) {
       return user;
@@ -571,6 +642,10 @@ function toggleUser(userId) {
 }
 
 function togglePayment(name) {
+  if (!isCurrentUserAdmin()) {
+    return;
+  }
+
   members = members.map((member) => {
     if (member.name !== name) {
       return member;
@@ -645,6 +720,7 @@ async function initApp() {
   renderPayments();
   renderUsers();
   renderTipOwners();
+  applyRoleUi();
   loadEurojackpotData();
   appIntervals = [setInterval(updateCountdown, 60000), setInterval(loadEurojackpotData, 900000)];
 }

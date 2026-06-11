@@ -51,6 +51,49 @@ function getAuthenticatedUser(context) {
   return context?.clientContext?.user || null;
 }
 
+function getUserRoles(user) {
+  const appRoles = user?.app_metadata?.roles;
+  const userRoles = user?.user_metadata?.roles;
+  const roles = Array.isArray(appRoles) ? appRoles : Array.isArray(userRoles) ? userRoles : [];
+  return roles.map((role) => String(role).toLowerCase());
+}
+
+function isAdmin(user) {
+  return getUserRoles(user).includes("admin");
+}
+
+function getUserEmail(user) {
+  return String(user?.email || "").toLowerCase();
+}
+
+function findAppUser(state, identityUser) {
+  const email = getUserEmail(identityUser);
+  return state.users.find((user) => String(user.email || "").toLowerCase() === email);
+}
+
+function isValidTip(tip) {
+  return (
+    tip &&
+    Array.isArray(tip.numbers) &&
+    Array.isArray(tip.euroNumbers) &&
+    tip.numbers.length === 5 &&
+    tip.euroNumbers.length === 2 &&
+    tip.numbers.every((number) => Number.isInteger(Number(number)) && Number(number) >= 1 && Number(number) <= 50) &&
+    tip.euroNumbers.every((number) => Number.isInteger(Number(number)) && Number(number) >= 1 && Number(number) <= 12)
+  );
+}
+
+async function readState(store) {
+  const state = await store.get(STATE_KEY, { type: "json" });
+  return normalizeState(state || defaultState);
+}
+
+async function writeState(store, state) {
+  const normalized = normalizeState(state);
+  await store.setJSON(STATE_KEY, normalized);
+  return normalized;
+}
+
 exports.handler = async (event, context) => {
   const user = getAuthenticatedUser(context);
 
@@ -93,14 +136,53 @@ exports.handler = async (event, context) => {
 
   try {
     if (event.httpMethod === "GET") {
-      const state = await store.get(STATE_KEY, { type: "json" });
-      return json(200, state || normalizeState(defaultState));
+      const state = await readState(store);
+      return json(200, {
+        ...state,
+        currentUser: {
+          email: user.email,
+          roles: getUserRoles(user),
+          isAdmin: isAdmin(user),
+        },
+      });
     }
 
     if (event.httpMethod === "POST") {
       const parsed = JSON.parse(event.body || "{}");
-      const state = normalizeState(parsed);
-      await store.setJSON(STATE_KEY, state);
+      const existingState = await readState(store);
+
+      if (isAdmin(user)) {
+        const state = await writeState(store, parsed);
+        return json(200, state);
+      }
+
+      const appUser = findAppUser(existingState, user);
+
+      if (!appUser) {
+        return json(403, { error: "No matching app user for this identity" });
+      }
+
+      const requestedTip = Array.isArray(parsed.userTips)
+        ? parsed.userTips.find((tip) => Number(tip.userId) === Number(appUser.id))
+        : null;
+
+      if (!isValidTip(requestedTip)) {
+        return json(403, { error: "Members can only update their own valid tip" });
+      }
+
+      const nextTip = {
+        userId: appUser.id,
+        name: appUser.name,
+        numbers: requestedTip.numbers.map(Number).sort((first, second) => first - second),
+        euroNumbers: requestedTip.euroNumbers.map(Number).sort((first, second) => first - second),
+      };
+      const existingTipIndex = existingState.userTips.findIndex((tip) => Number(tip.userId) === Number(appUser.id));
+      const userTips =
+        existingTipIndex >= 0
+          ? existingState.userTips.map((tip, index) => (index === existingTipIndex ? nextTip : tip))
+          : [...existingState.userTips, nextTip];
+      const state = await writeState(store, { ...existingState, userTips });
+
       return json(200, state);
     }
 

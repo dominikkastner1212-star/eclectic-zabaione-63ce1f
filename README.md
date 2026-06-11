@@ -39,6 +39,15 @@ Nach dem ersten Deploy:
 
 Die `state` Function lehnt Requests ohne gueltigen Identity-Login mit `401` ab.
 
+## Rollen
+
+In Netlify Identity sollte mindestens ein Benutzer die Rolle `admin` bekommen.
+
+- `admin`: darf Benutzer, Zahlungsstatus und alle Tipps verwalten.
+- ohne `admin`: darf die App sehen und nur den eigenen Tipp speichern.
+
+Rollen werden in Netlify unter `Identity > Users > Benutzer > Roles` gepflegt.
+
 ## Wichtige Dateien
 
 - `index.html`: App-Struktur.
